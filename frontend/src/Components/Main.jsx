@@ -59,6 +59,7 @@ function Main() {
     justifyContent: 'center',
     color: 'white',
     fontSize: '2rem',
+           animation:'fadeInOut 10s linear infinite'
   };
 
   return (
