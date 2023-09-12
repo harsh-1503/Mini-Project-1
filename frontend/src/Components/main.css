@@ -1,0 +1,116 @@
+ @import url('https://fonts.googleapis.com/css2?family=Overpass:wght@700&family=Poppins:wght@400;500&display=swap');
+ @keyframes fadeInOut {
+    0% {
+      
+        opacity: 0.4; 
+        background-color: rgba(0, 0, 0, 0);
+    }
+    50% {
+      opacity: 1; 
+      background-color: rgba(0, 0, 0, 0);
+    }
+    100% {
+      opacity: 1; 
+      background-color: rgba(0, 0, 0, 0);
+    }
+  }
+
+.navbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 90%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+    padding: 20px 40px; /* Increase padding for desktop screens */
+  }
+  
+  .navbar-left {
+
+    font-size: 1rem;
+    gap: 10px;
+  }
+  
+  .navbar-right {
+    display: flex;
+    gap: 10px;
+    font-size: 1.5rem;
+  }
+  .nav-link {
+    text-decoration: none;
+    color: white;
+  }
+  
+  .website-name {
+    font-size: 40px; /* Adjust for larger screens */
+  }
+  
+  .btn {
+    background-color: rgb(241, 176, 55);
+    border-radius: 15px;
+    font-size: 20px;
+   
+  }
+  
+  .agro {
+    font-family:'Poppins' , 'sans-serif';
+    text-transform:uppercase
+  }
+  
+  .button-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    margin-top: 20px;
+  }
+  
+  .button {
+    background-color: rgb(241, 176, 55);
+    border-radius: 15px;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 1.2rem;
+  }
+  
+  h5 {
+    color: rgb(245, 244, 242);
+    font-style: italic;
+    font-weight: 300;
+  }
+  
+  @media (min-width:350px) and (max-width:500px) {
+    .website-name{
+        font-size:18px;
+    }
+    .navbar-right{
+        display:flex;
+        gap:10px;
+        font-size: 1rem;
+    }
+    .button{
+        font-size: 0.7rem;
+        padding:5px ;
+    }
+    .agro{
+        font-size:40px;
+        display:flex;
+        justify-content: center;
+
+    }
+    h5{
+        font-size: 15px;
+        display:flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .btn {
+        background-color: rgb(241, 176, 55);
+        border-radius: 15px;
+        font-size: 15px;
+       
+      }
+ }
+  
