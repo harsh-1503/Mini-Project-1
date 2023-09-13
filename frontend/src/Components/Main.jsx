@@ -46,7 +46,7 @@
 // Main.jsx
 import React from 'react';
 import './main.css'; // Import your CSS file for component-specific styles
-import backgroundImage from './home.jpg';
+import backgroundImage from '../assets/home.jpg';
 
 function Main() {
   const backgroundImageStyle = {

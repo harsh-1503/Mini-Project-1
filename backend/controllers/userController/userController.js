@@ -1,6 +1,7 @@
-const User = require('../models/User')
-const Profile = require('../models/Profile');
-const OTP = require('../models/OTP');
+const User = require('../../models/User')
+// const Profile = require('../models/Profile');
+// const OTP = require('../models/OTP');
+const OTP  = require('../../models/OTP')
 const otpGenerator = require('otp-generator')
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -77,9 +78,9 @@ exports.signUp = async(req,res) =>{
             contactNumber,
             otp
         } = req.body;
-    
+        const {role} = req.params
         // Validate The Fields
-        if(!firstName || !lastName || !password || !confirmPassword || !email || !otp ){
+        if(!firstName || !lastName || !password || !confirmPassword || !email ){
             return res.status(401).json({
                 success:false,
                 message:"All Fields Are Required"
@@ -129,22 +130,24 @@ exports.signUp = async(req,res) =>{
     
         // Create Entry in DB
     
-        const profileDetails = await Profile.create({
-            gender:null,
-            dateOfBirth:null,
-            about:null,
-            contactNumber:null
-        })
+        // const profileDetails = await Profile.create({
+        //     gender:null,
+        //     dateOfBirth:null,
+        //     about:null,
+        //     contactNumber:null
+        // })
     
-        const user = User.create({
-            firstName,
-            lastName,
-            email,
-            contactNumber,
+        const user = await User.create({
+            firstName:firstName,
+            lastName:lastName,
+            email:email,
+            // contactNumber,
             password:hashedPassword,
-            accountType,
-            additionalDetails:profileDetails._id,
-            image:`https://api.dicebear.com/5.x/initials/svg?seed=${firstName} ${lastName}`
+            role:role,
+            // accountType,
+            // additionalDetails:profileDetails._id,
+            // image:`https://api.dicebear.com/5.x/initials/svg?seed=${firstName} ${lastName}`
+
         })
 
         return res.status(200).json({

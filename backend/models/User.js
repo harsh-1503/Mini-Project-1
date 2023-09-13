@@ -11,6 +11,10 @@ const userSchema = new mongoose.Schema({
         required:true,
         trim:true
     },
+    email:{
+        type:String,
+        required:true
+    },
     password:{
         type:String,
         required:true,
@@ -23,7 +27,7 @@ const userSchema = new mongoose.Schema({
     additionalDetails:{
         type:mongoose.Schema.Types.ObjectId,
         ref:"Profile",
-        required:true
+        // required:true
     },
     city:{
         type:String,
@@ -40,8 +44,6 @@ const userSchema = new mongoose.Schema({
         type : String ,
         trim:true
     }]
-
-    
 })
 
 module.exports = mongoose.model("User",userSchema);
