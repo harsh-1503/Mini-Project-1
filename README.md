@@ -1,2 +1,0 @@
-# Mini-Project-1
-

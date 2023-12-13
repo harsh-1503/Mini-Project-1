@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pannellum with ML</title>
+    <script src="https://cdn.pannellum.org/2.5/pannellum.js"></script>
+    <link rel="stylesheet" href="https://cdn.pannellum.org/2.5/pannellum.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <style>
+      body,
+      html {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      #panorama {
+        width: 100%;
+        height: 60vh;
+      }
+
+      #tileCanvas {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="panorama"></div>
+    <canvas id="tileCanvas" style="width: 512px;height: 512px;"></canvas>
+
+    <script>
+      async function loadModel() {
+        try { 
+          const model = await tf.loadLayersModel("./model.json");
+          return model;
+        } catch (error) {
+          console.error("Error loading the model:", error);
+          throw error;
+        }
+      }
+
+    //   function preprocess(imageData) {
+    //     return tf.tidy(() => {
+    //     const tensor = tf.browser.fromPixels(imageData).toFloat();
+    //     const normalized = tensor.div(tf.scalar(255));
+    //     return normalized;
+    // });
+
+    //     // return tf.browser.fromPixels(imageData).toFloat().div(tf.scalar(255));
+    //   }
+    function preprocess(imageData) {
+    return tf.tidy(() => {
+        const tensor = tf.browser.fromPixels(imageData).toFloat();
+
+        // Resize the image to match the expected model input dimensions
+        const resized = tf.image.resizeBilinear(tensor, [224, 224]);
+
+        // Normalize pixel values to be between 0 and 1
+        const normalized = resized.div(tf.scalar(255));
+
+        // Add a batch dimension
+        const batched = normalized.expandDims(0);
+
+        return batched;
+    });
+}
+
+      function postprocess(predictions) {
+        // Implement postprocessing steps if needed
+        return predictions;
+      }
+
+      function displayResults(results, tileX, tileY, tileWidth, tileHeight) {
+        // Implement logic to overlay results on the panoramic view
+        console.log(results, tileX, tileY, tileWidth, tileHeight);
+      }
+
+      async function processTile(tileX, tileY, tileWidth, tileHeight) {
+        try {
+          const img = new Image();
+
+          img.onerror = function () {
+            console.error("Error loading the image:", img.src);
+          };
+
+          img.onload = async function () {
+            console.log("Image Loaded");
+
+            const tileCanvas = document.getElementById("tileCanvas");
+            const tileCtx = tileCanvas.getContext("2d");
+
+            tileCtx.clearRect(0, 0, tileCanvas.width, tileCanvas.height);
+
+            // Display the clipped area of the tile on the canvas for visualization
+            tileCtx.drawImage(
+              img,
+              tileX,
+              tileY,
+              tileWidth,
+              tileHeight,
+              0,
+              0,
+              1000,
+              1000
+            );
+
+            // Display the canvas for visualization
+            tileCanvas.style.display = "block";
+
+            // Get image data for the clipped area
+            const tileImageData = await  tileCtx.getImageData(
+              0,
+              0,
+              tileCanvas.width,
+              tileCanvas.height
+            );
+            console.log(tileImageData);
+            // Preprocess the tile image data
+            
+            // const preprocessedData = tf.tensor4d(tileImageData, [1, 150, 300, 3]);
+            const preprocessedData = preprocess(tileImageData);
+            // const batchedData = tf.expandDims(preprocessedData, 0);  // Add a batch dimension
+
+            // Load the ML model
+            const model = await loadModel();
+            console.log("Preprocessed Data"+ preprocessedData);
+            // console.log(batchedData);
+            // Make predictions using the ML model
+            const predictions = await model.predict(preprocessedData);
+            console.log("Predictions: " + predictions);
+            // Postprocess the predictions if needed
+            const postprocessedResults = postprocess(predictions);
+
+            // Hide the canvas after processing
+            // tileCanvas.style.display = "none";
+
+            // Display the results on the panoramic view
+            displayResults(
+              postprocessedResults,
+              tileX,
+              tileY,
+              tileWidth,
+              tileHeight
+            );
+          };
+
+          // Replace with the actual path to your panoramic image
+          img.src = "./1.jpg";
+        } catch (error) {
+          console.error("Error processing the tile:", error);
+        }
+      }
+
+      const viewer = pannellum.viewer("panorama", {
+        type: "equirectangular",
+        panorama: "./1.jpg",
+        tileSize: 512, // Adjust based on your tile size
+        tileResolution: 100, // Number of tiles along each axis
+        autoload: true, // Load the panorama immediately
+        showZoomCtrl: false, // Hide the zoom controls if needed
+
+        autoZoom: false, // Disable auto-rotation
+        compass: false, // Hide the compass if needed
+        navbar: true, // Hide the navigation bar if needed
+        hfov: 60, // Set your desired horizontal field of view
+        vfov: 60,
+        hotSpots: [
+          {
+            pitch: 0,
+            yaw: 0,
+            cssClass: "custom-hotspot",
+            createTooltipFunc: hotspot,
+            createTooltipArgs: "Harsh Karwa",
+          },
+          {
+            pitch: -9.4,
+            yaw: 222.6,
+            cssClass: "custom-hotspot",
+            createTooltipFunc: hotspot,
+            createTooltipArgs: "Art Museum Drive",
+          },
+          {
+            pitch: -0.9,
+            yaw: 144.4,
+            cssClass: "custom-hotspot",
+            createTooltipFunc: hotspot,
+            createTooltipArgs: "North Charles Street",
+          },
+        ], // Set your desired vertical field of view
+      });
+      function hotspot(hotSpotDiv, args) {
+        hotSpotDiv.classList.add("custom-tooltip");
+        var span = document.createElement("span");
+        span.innerHTML = args;
+        hotSpotDiv.appendChild(span);
+        span.style.width = span.scrollWidth - 20 + "px";
+        span.style.marginLeft =
+          -(span.scrollWidth - hotSpotDiv.offsetWidth) / 2 + "px";
+        span.style.marginTop = -span.scrollHeight - 12 + "px";
+      }
+
+      // function captureView(pitch, yaw, width, height) {
+      //   // Create a canvas element
+      //   console.log("Capturing View");
+      //   const tileCanvas = document.getElementById("tileCanvas");
+      //   tileCanvas.width = width;
+      //   tileCanvas.height = height;
+      //   const context = tileCanvas.getContext("2d");
+
+      //   // Set the viewer to the specified pitch and yaw
+      //   viewer.setPitch(pitch);
+      //   viewer.setYaw(yaw);
+
+      //   // Wait for the viewer to update
+      //   return new Promise((resolve) => {
+      //     viewer.addEventListener("mouseup", () => {
+      //       // Draw the current view onto the canvas
+      //       context.drawImage(
+      //         viewer.getRenderer().getCanvas(),
+      //         0,
+      //         0,
+      //         width,
+      //         height
+      //       );
+
+      //       // Resolve the promise with the captured image data
+      //       resolve(canvas.toDataURL("image/png"));
+      //     });
+      //   });
+      // }
+
+      // // Example usage:
+      // captureView(0, 0, 400, 200).then((imageData) => {
+        // imageData contains the captured image as a data URL
+      //   console.log(imageData);
+      // });
+
+      function pitchYawToImageCoordinates(pitch, yaw) {
+            // Get the internal renderer
+            const renderer = viewer.getRenderer();
+
+            // Get the current panorama dimensions
+            const panoramaWidth = 6985;
+            const panoramaHeight = 2580;
+
+            // Normalize pitch and yaw to the range [0, 360]
+            const normalizedYaw = (yaw + 180) % 360;
+            const normalizedPitch = pitch + 90;
+
+            // Calculate image coordinates
+            const x = (normalizedYaw / 360) * panoramaWidth;
+            const y = (normalizedPitch / 180) * panoramaHeight;
+
+            return { x, y };
+          }
+
+          function clipImageOntoCanvas(pitch, yaw, canvasId) {
+            const coordinates = pitchYawToImageCoordinates(pitch, yaw);
+
+            // Create a canvas
+            const canvas = document.createElement("canvas");
+            // const canvas = document.getElementById('tileCanvas')
+            const ctx = canvas.getContext("2d");
+
+            // Set the canvas dimensions (adjust as needed)
+            canvas.width = 512; // Set the desired width
+            canvas.height = 512; // Set the desired height
+
+            // Draw the clipped area onto the canvas
+            ctx.drawImage(
+              viewer.getRenderer().getCanvas(),
+              coordinates.x,
+              coordinates.y,
+              canvas.width,
+              canvas.height,
+              0,
+              0,
+              canvas.width,
+              canvas.height
+            );
+
+            // Append the canvas to the document (or replace an existing canvas)
+            const existingCanvas = document.getElementById(canvasId);
+            if (existingCanvas) {
+              document.body.replaceChild(canvas, existingCanvas);
+            } else {
+              document.body.appendChild(canvas);
+            }
+          }
+
+      document.addEventListener("mouseup", async function (event) {
+        try {
+          // Get current view angles
+          console.log("Mouse Up called");
+          //   const clickX = event.clientX;
+          //   const clickY = event.clientY;
+          const pitch = await viewer.getPitch();
+          const yaw = await viewer.getYaw();
+          console.log("Pitch : ", pitch);
+          console.log("Yaw : ", yaw);
+          // Calculate the tile coordinates based on the current view angles
+          const tileWidth = 1000; // Adjust based on your tile size
+          const tileHeight = 1000; // Adjust based on your tile size
+          const panoramicImageWidth = 6985; /* Your panoramic image width */
+          const panoramicImageHeight = 2580; /* Your panoramic image height */
+
+          const yawRatio = yaw / 360;
+          const pitchRatio = pitch / 180;
+
+          // Calculate the clicked coordinates in the panoramic image
+          // const panoramicImageWidth = viewer.getConfig().panorama.width;  // Replace with your image width
+          // const panoramicImageHeight = viewer.getConfig().panorama.height;  // Replace with your image height
+          
+
+          // Calculate the tile coordinates
+          // const tileX =
+          //   Math.floor((yawRatio * panoramicImageWidth) / tileWidth) *
+          //   tileWidth;
+          // const tileY =
+          //   Math.floor((pitchRatio * panoramicImageHeight) / tileHeight) *
+          //   tileHeight;
+
+          // console.log("Tile Coordinates: ", tileX, tileY);
+          
+          // Process the tile using the calculated coordinates
+          console.log("Process Tile Called");
+          const coordinates = pitchYawToImageCoordinates(pitch, yaw);
+          // clipImageOntoCanvas(pitch,yaw,"tileCanvas")
+          console.log(coordinates);
+          processTile(coordinates.x, coordinates.y, tileWidth, tileHeight);
+        } catch (error) {
+          console.error("Error in mouseup event:", error);
+        }
+      });
+    </script>
+  </body>
+</html>
